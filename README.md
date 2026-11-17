@@ -31,31 +31,28 @@ A tier whose family the account does not offer fails instead of switching models
 
 ## Install
 
-Requires Python 3 and whichever CLIs you want to call (`codex`, `agy`, `claude`), each already logged in. Clone the repository first:
+Requires Python 3 and whichever CLIs you want to call (`codex`, `agy`, `claude`), each already logged in. Each install is registered for your user account on that machine, so it applies to every project.
+
+There are two ways to add the marketplace: from the GitHub repository, or from a local clone.
 
 ```bash
-git clone https://github.com/chlee4831/external-llm-plugin.git
+git clone https://github.com/chlee4831/external-llm-plugin.git   # local method only
 ```
 
-Claude Code:
+| Host | From GitHub | From a local clone |
+|---|---|---|
+| Claude Code | `claude plugin marketplace add chlee4831/external-llm-plugin` | `claude plugin marketplace add ./external-llm-plugin` |
+| Codex | `codex plugin marketplace add chlee4831/external-llm-plugin` | `codex plugin marketplace add ./external-llm-plugin` |
+| Antigravity | not supported (installs from a folder only) | `agy plugin install ./external-llm-plugin/plugins/external-llm` |
+
+Then install the plugin from the marketplace:
 
 ```bash
-claude plugin marketplace add ./external-llm-plugin
 claude plugin install external-llm@chlee-plugins
-```
-
-Codex:
-
-```bash
-codex plugin marketplace add ./external-llm-plugin
 codex plugin add external-llm@chlee-plugins
 ```
 
-Antigravity:
-
-```bash
-agy plugin install ./external-llm-plugin/plugins/external-llm
-```
+To update: the GitHub method pulls the latest version on `claude plugin marketplace update` / `codex plugin marketplace upgrade`. The local method reads your clone, so `git pull` first. Codex and Antigravity copy the plugin at install time, so run their install command again after either update.
 
 ## Tests
 
@@ -65,4 +62,3 @@ agy plugin install ./external-llm-plugin/plugins/external-llm
 
 - Each provider runs read-only: Codex `--sandbox read-only`, agy `--mode plan --sandbox`, Claude `dontAsk` with Read/Grep/Glob only. Claude's plan mode is avoided because it switches the model.
 - In a sandboxed host (Codex on Windows), the script must run outside the sandbox. It needs network access and the user's CLI logins, so approve escalation when asked.
-- Codex copies the plugin into its cache at install time; run `codex plugin add` again after editing.
