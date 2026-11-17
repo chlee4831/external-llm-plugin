@@ -1,0 +1,64 @@
+# external-llm
+
+Ask another AI model (OpenAI Codex, Google Antigravity/Gemini, or Claude) through its CLI, read-only, from inside Claude Code, Codex, or Antigravity (agy). The other model runs in the current project and follows its `AGENTS.md`.
+
+```
+.claude-plugin/marketplace.json      Claude Code marketplace
+.agents/plugins/marketplace.json     Codex marketplace
+plugins/external-llm/
+  plugin.json                        portable manifest (Agent Plugins 1.0; Codex, agy)
+  .codex-plugin/plugin.json          Codex compatibility copy
+  .claude-plugin/plugin.json         Claude Code manifest (points to claude/agents)
+  skills/external-llm/SKILL.md       shared instructions for every host
+  skills/external-llm/scripts/xllm.py    the CLI wrapper
+  skills/external-llm/scripts/tiers.json tier -> model family map
+  claude/agents/external-llm.md      Claude Code subagent (model: haiku)
+  agents/external-llm.md             agy subagent (model: flash_lite)
+```
+
+## Models
+
+`--model` takes a tier, a family name, or a full id. A tier resolves at call time to the newest model of its family.
+
+| Tier | codex | claude | agy | default effort |
+|---|---|---|---|---|
+| `lightest` | luna | haiku | flash | low |
+| `light` | terra | sonnet | hydrogen | low |
+| `standard` | sol | opus | argon | medium |
+| `strongest` | astra (else sol) | fable | carbon | high |
+
+A tier whose family the account does not offer fails instead of switching models (agy `strongest` needs carbon). To change the map, edit `plugins/external-llm/skills/external-llm/scripts/tiers.json` or point `XLLM_TIERS` at your own copy. `python xllm.py --list <provider>` shows the available models and what each tier resolves to.
+
+## Install
+
+Requires Python 3 and whichever CLIs you want to call (`codex`, `agy`, `claude`), each already logged in.
+
+Claude Code:
+
+```bash
+claude plugin marketplace add C:/Users/chlee/workspace/plugin-dev
+claude plugin install external-llm@chlee-plugins
+```
+
+Codex:
+
+```bash
+codex plugin marketplace add C:/Users/chlee/workspace/plugin-dev
+codex plugin add external-llm@chlee-plugins
+```
+
+Antigravity:
+
+```bash
+agy plugin install C:/Users/chlee/workspace/plugin-dev/plugins/external-llm
+```
+
+## Tests
+
+`tests/TESTPLAN.md` lists the cases and `tests/RESULTS.md` the latest run. Offline: `python -m unittest tests/test_xllm.py`. Real calls: `bash tests/real_calls.sh <provider>` and `bash tests/host_e2e.sh <case>`.
+
+## Notes
+
+- Each provider runs read-only: Codex `--sandbox read-only`, agy `--mode plan --sandbox`, Claude `dontAsk` with Read/Grep/Glob only. Claude's plan mode is avoided because it switches the model.
+- In a sandboxed host (Codex on Windows), the script must run outside the sandbox. It needs network access and the user's CLI logins, so approve escalation when asked.
+- Codex copies the plugin into its cache at install time; run `codex plugin add` again after editing.

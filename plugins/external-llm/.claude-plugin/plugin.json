@@ -1,0 +1,11 @@
+{
+  "name": "external-llm",
+  "version": "0.2.0",
+  "description": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, read-only, by tier or model name.",
+  "author": {
+    "name": "chlee4831"
+  },
+  "agents": [
+    "./claude/agents/external-llm.md"
+  ]
+}

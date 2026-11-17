@@ -1,0 +1,52 @@
+{
+  "_comment": "Four tiers, lightest to strongest. Each maps per provider to family keywords and a default effort. The newest listed model of the first available family is used, so new versions are picked up without edits; a second family is a fallback (codex strongest falls back to sol), and a tier with no available family fails. A provider entry may be {\"families\": [...], \"effort\": \"...\"} to override the effort. Override the whole file with $XLLM_TIERS.",
+  "lightest": {
+    "effort": "low",
+    "codex": [
+      "luna"
+    ],
+    "agy": [
+      "flash"
+    ],
+    "claude": [
+      "haiku"
+    ]
+  },
+  "light": {
+    "effort": "low",
+    "codex": [
+      "terra"
+    ],
+    "agy": [
+      "hydrogen"
+    ],
+    "claude": [
+      "sonnet"
+    ]
+  },
+  "standard": {
+    "effort": "medium",
+    "codex": [
+      "sol"
+    ],
+    "agy": [
+      "argon"
+    ],
+    "claude": [
+      "opus"
+    ]
+  },
+  "strongest": {
+    "effort": "high",
+    "codex": [
+      "astra",
+      "sol"
+    ],
+    "agy": [
+      "carbon"
+    ],
+    "claude": [
+      "fable"
+    ]
+  }
+}
