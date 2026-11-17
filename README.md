@@ -31,26 +31,30 @@ A tier whose family the account does not offer fails instead of switching models
 
 ## Install
 
-Requires Python 3 and whichever CLIs you want to call (`codex`, `agy`, `claude`), each already logged in.
+Requires Python 3 and whichever CLIs you want to call (`codex`, `agy`, `claude`), each already logged in. Clone the repository first:
+
+```bash
+git clone https://github.com/chlee4831/external-llm-plugin.git
+```
 
 Claude Code:
 
 ```bash
-claude plugin marketplace add C:/Users/chlee/workspace/plugin-dev
+claude plugin marketplace add ./external-llm-plugin
 claude plugin install external-llm@chlee-plugins
 ```
 
 Codex:
 
 ```bash
-codex plugin marketplace add C:/Users/chlee/workspace/plugin-dev
+codex plugin marketplace add ./external-llm-plugin
 codex plugin add external-llm@chlee-plugins
 ```
 
 Antigravity:
 
 ```bash
-agy plugin install C:/Users/chlee/workspace/plugin-dev/plugins/external-llm
+agy plugin install ./external-llm-plugin/plugins/external-llm
 ```
 
 ## Tests
