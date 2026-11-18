@@ -2,6 +2,6 @@
   "name": "chlee-plugins",
   "owner": { "name": "chlee4831" },
   "plugins": [
-    { "name": "external-llm", "source": "./plugins/external-llm", "description": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, read-only, by tier or model name." }
+    { "name": "external-llm", "source": "./plugins/external-llm", "description": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, by tier or model name. The model may read, search the web, run shell commands and edit files in the project." }
   ]
 }

@@ -5,49 +5,42 @@ description: Ask another AI model (OpenAI Codex, Google Antigravity/Gemini, or C
 
 # External model call
 
-Runs one prompt on another model's CLI, read-only, in the current project, and returns its final answer unchanged. The other model reads the project's `AGENTS.md` as it would on its own.
+Runs one prompt on another model's CLI in the current project and returns its final answer unchanged. That model follows the project's `AGENTS.md`. It may read, search the web, run shell commands and edit files, but cannot start subagents.
 
-If an `external-llm` subagent is available, give it the task and stop here. Otherwise follow the steps below.
+If an `external-llm` subagent is available, hand it the task and stop.
 
-## 1. Choose provider, model, effort
+## 1. Options
 
 | Option | Values |
 |---|---|
 | `--provider` | `codex` (OpenAI), `agy` (Google Antigravity), `claude` (Anthropic) |
-| `--model` | a tier: `lightest`, `light`, `standard`, `strongest`; a family: `luna`, `terra`, `sol`, `astra`, `flash`, `hydrogen`, `argon`, `carbon`, `haiku`, `sonnet`, `opus`, `fable`; or a full model id |
+| `--model` | tier `lightest`, `light`, `standard`, `strongest`; family `luna`, `terra`, `sol`, `astra`, `flash`, `hydrogen`, `argon`, `carbon`, `haiku`, `sonnet`, `opus`, `fable`; or a full id |
 | `--effort` | `low`, `medium`, `high`, `xhigh`, `max` |
+| `--read-only` | no file edits; use it when the user says not to change files |
+| `--cwd <dir>` | project to work in (default: current directory) |
+| `--timeout <sec>` | default 900 |
+| `--max-chars <n>` | default 20000; a longer answer is cut and ends with the path of the full text |
 
-- Use the provider, model and effort the user gave. Omit any they did not give.
-- If the user named no provider, do not use your own: from Codex use `claude` or `agy`, from Antigravity use `codex` or `claude`, from Claude use `codex` or `agy`.
-- A tier picks the newest model of its family and sets a default effort (`scripts/tiers.json`).
-- To see the choices: `python <skill-dir>/scripts/xllm.py --list <provider>`.
+- Use what the user gave; omit the rest. A tier sets a default effort (`scripts/tiers.json`).
+- No provider named: never use your own. From Codex use `claude` or `agy`, from Claude `codex` or `agy`.
+- `python <skill-dir>/scripts/xllm.py --list <provider>` shows the models.
 
-## 2. Run the script
+## 2. Run
 
-The script is `scripts/xllm.py` in this skill's directory. Use its absolute path, and `python3` if `python` is missing.
+The script is `scripts/xllm.py` in this skill's directory; use its absolute path, and `python3` if `python` is missing. It needs network access and the user's CLI logins, so run it outside any sandbox; on a sandboxed host (e.g. Codex), ask for escalation, and rerun with escalation if a command is "not found".
 
-Run it outside any sandbox: it needs network access and the user's CLI login. On a sandboxed host (e.g. Codex), ask for escalation first. If `python`, `codex`, `agy` or `claude` is "not found" inside a sandbox, rerun the same command with escalation.
-
-Write the prompt to a temporary UTF-8 file with your file tool, then run:
+Write the prompt to a temporary UTF-8 file with your file tool, then run once:
 
 ```
 python <skill-dir>/scripts/xllm.py --provider <p> [--model <m>] [--effort <e>] --prompt-file <file>
 ```
 
-In a POSIX shell you can pipe the prompt instead:
+In a POSIX shell, a heredoc works instead of the file (`<<'XLLM_EOF'` … `XLLM_EOF`).
 
-```bash
-python <skill-dir>/scripts/xllm.py --provider codex --model lightest <<'XLLM_EOF'
-<prompt>
-XLLM_EOF
-```
-
-The prompt must carry everything the other model needs: the question, file paths, and constraints. Do not put your own answer in it.
-
-Other options: `--cwd <dir>` (project to work in; default: current directory), `--timeout <sec>` (default 900), `--max-chars <n>` (default 20000; a longer answer is cut and ends with the path of the full text).
+The prompt carries everything the other model needs: question, file paths, constraints. Never your own answer.
 
 ## 3. Report
 
-Print the script's stdout unchanged. Its first line, `[model: provider/model/effort]`, says which model answered. Add nothing, and never write that line or an answer yourself before the script has finished.
+Print the script's stdout unchanged; its first line, `[model: provider/model/effort]`, names the model. Add nothing, and write nothing before the script finishes.
 
-If the script exits non-zero, report its stderr and stop. Do not retry.
+On a non-zero exit, report its stderr and stop. Do not retry.

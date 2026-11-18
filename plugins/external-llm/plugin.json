@@ -2,14 +2,14 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "external-llm",
   "version": "0.2.0",
-  "description": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, read-only, by tier or model name.",
+  "description": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, by tier or model name. The model may read, search the web, run shell commands and edit files in the project.",
   "author": { "name": "chlee4831" },
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "External LLM",
         "shortDescription": "Ask other models via CLI",
-        "longDescription": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, read-only, by tier or model name. Picks models by tier (lightest, light, standard, strongest) or family name and returns the answer verbatim.",
+        "longDescription": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, by tier or model name. The model may read, search the web, run shell commands and edit files in the project. Picks models by tier (lightest, light, standard, strongest) or family name and returns the answer verbatim.",
         "developerName": "chlee4831",
         "category": "Developer Tools",
         "capabilities": ["Interactive", "Read"],

@@ -2,8 +2,13 @@
 """Run one prompt on an external model through its CLI and print the final answer.
 
 Providers: codex (OpenAI Codex CLI), agy (Google Antigravity CLI), claude (Claude Code).
-Every provider runs read-only in the working directory (--cwd, default: the
-current directory), so it reads that project's AGENTS.md like it would on its own.
+Every provider runs in the working directory (--cwd, default: the current
+directory), so it reads that project's AGENTS.md like it would on its own.
+Permissions follow Codex's defaults plus file writes: it may read, search the
+web, run shell commands in the CLI's sandbox, and edit files, without asking;
+each CLI keeps its default tools except subagents, which a Claude Code subagent
+cannot start either (agy can only be asked not to). --read-only takes the file
+writes away again.
 
 The prompt comes from --prompt-file, or from stdin when no file is given. Only the
 model's final answer goes to stdout. CLI progress is kept in a log file whose path
@@ -171,10 +176,15 @@ def resolve_model(provider, name, effort):
 
 def run_codex(prompt, a, work):
     out_file = os.path.join(work, "answer.txt")
+    # Codex's defaults (no approvals, sandboxed shell, web search on) with the
+    # sandbox widened to write in the project: workspace-write. --read-only
+    # keeps exec's default read-only sandbox.
     cmd = [find_exe("codex"), "exec",
-           "--sandbox", "read-only",          # may read the project, never write
+           "--sandbox", "read-only" if a.read_only else "workspace-write",
            "--skip-git-repo-check", "--ephemeral", "--color", "never",
-           "-o", out_file]                    # runs in a.cwd (see call)
+           "-o", out_file,                    # runs in a.cwd (see call)
+           # No subagents, as in a Claude Code subagent.
+           "-c", "features.multi_agent=false"]
     if a.model:
         cmd += ["-m", a.model]
     if a.effort:
@@ -185,9 +195,17 @@ def run_codex(prompt, a, work):
     return rc, answer, None
 
 
+AGY_NO_SUBAGENTS = ("(Do not use define_subagent, invoke_subagent, manage_subagents or "
+                    "browser_subagent: do the task yourself.)")
+
+
 def run_agy(prompt, a, work):
     cmd = [find_exe("agy"),
-           "--mode", "plan", "--sandbox",     # plan mode: read and answer, no edits
+           # Like Codex: shell commands and web reads allowed, inside agy's
+           # sandbox; edits accepted. Read-only: plan mode instead.
+           "--mode", "plan" if a.read_only else "accept-edits", "--sandbox",
+           "--settings", json.dumps({"permissions": {
+               "allow": ["command(*)", "read_url(*)"]}}),
            "--input-format", "stream-json", "--output-format", "stream-json",
            f"--print-timeout={a.timeout}s"]
     if a.model:
@@ -195,7 +213,9 @@ def run_agy(prompt, a, work):
     if a.effort:
         cmd += ["--effort", a.effort]
     cmd.append("-p=")                         # prompt comes from stdin below
-    msg = json.dumps({"event": "user", "message": {"content": prompt}}, ensure_ascii=False)
+    # agy cannot switch its subagent tools off, so it is asked not to use them.
+    content = AGY_NO_SUBAGENTS + "\n\n" + prompt
+    msg = json.dumps({"event": "user", "message": {"content": content}}, ensure_ascii=False)
     rc, out = call(cmd, (msg + "\n").encode("utf-8"), a, work)
     result = last_event(out, lambda e: e.get("event") == "result")
     if not result:
@@ -206,10 +226,16 @@ def run_agy(prompt, a, work):
 
 
 def run_claude(prompt, a, work):
-    # dontAsk + read-only tools: no edits. (Plan mode is avoided on purpose:
-    # it switches the session to a different model than the one requested.)
+    # Like Codex: the default tools, with shell, web and (unless --read-only)
+    # edits pre-approved; anything else that needs approval is denied.
+    # Claude has no default sandbox, so --read-only drops the shell too.
+    # (Plan mode is avoided: it switches the model to a different one.)
+    tools = "Read,Grep,Glob,WebSearch,WebFetch" + (
+        "" if a.read_only else ",Bash,PowerShell,Edit,Write,NotebookEdit")
     cmd = [find_exe("claude"), "-p",
-           "--permission-mode", "dontAsk", "--allowedTools", "Read,Grep,Glob",
+           "--permission-mode", "dontAsk", "--allowedTools", tools,
+           # No subagents: a Claude Code subagent cannot start another one.
+           "--disallowedTools", "Task,Agent,Workflow",
            "--no-session-persistence", "--output-format", "json"]
     if a.model:
         cmd += ["--model", a.model]
@@ -296,6 +322,9 @@ def main():
                    "name (astra, sol, argon, flash, opus...), or a full model id; "
                    "omit to use the CLI's own default")
     p.add_argument("--effort", choices=EFFORTS, help="reasoning effort")
+    p.add_argument("--read-only", action="store_true",
+                   help="take file writes away (default: Codex's default permissions "
+                        "plus file writes)")
     p.add_argument("--cwd", default=os.getcwd(),
                    help="project the model works in and reads AGENTS.md from (default: current dir)")
     p.add_argument("--prompt-file", help="read the prompt from this UTF-8 file instead of stdin")
