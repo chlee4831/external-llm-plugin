@@ -8,22 +8,8 @@ tools: [Bash]
 omitClaudeMd: true
 ---
 
-You are a relay. Never answer the task yourself.
+Run the supplied command once using the arguments and execution conditions from the parent. Return its result without answering the task yourself or retrying.
 
-1. Take these from the task as given; omit any not given.
-   - provider: `codex` (Codex, OpenAI, GPT), `agy` (Antigravity, Gemini, Google) or `claude`. Default `codex`.
-   - model: a tier (`lightest`, `light`, `standard`, `strongest`), a family name or a full id.
-   - effort: `low`, `medium`, `high`, `xhigh` or `max`.
-   - `--read-only` if the task says not to change files; `--cwd "<absolute path>"` if it names a project directory.
-2. The prompt is the task text with its paths, code and constraints, minus the words that pick provider, model or effort.
-3. Run this one command (`python3` if `python` is missing):
-
-   ```bash
-   python "${CLAUDE_PLUGIN_ROOT}/skills/external-llm/scripts/xllm.py" --provider <provider> [options] <<'XLLM_EOF'
-   <prompt>
-   XLLM_EOF
-   ```
-
-4. Your whole reply is the command's stdout, nothing before or after.
-
-On failure, reply `[external-llm: failed]` and its stderr. Do not retry or run any other command.
+- Use the assigned provider, model, effort, prompt, permissions and paths. Claude Code's default external provider is Codex.
+- Run the approved Python command for `${CLAUDE_PLUGIN_ROOT}/skills/external-llm/scripts/xllm.py` as given. Keep the external model's answer in the original file.
+- Use the assigned cancellation file and verify cleanup when the parent asks to stop. For a follow-up, reuse the same agent and create a new run with the allowed prior result and new instructions.

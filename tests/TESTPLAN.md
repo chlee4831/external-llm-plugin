@@ -26,8 +26,14 @@
 | 2e | broken JSON in `XLLM_TIERS` | exit 2, no traceback |
 | 2f | CLI missing from PATH | exit 3 "not found", no leftover temp dir |
 | 2g | `--provider foo`, `--effort ultra` | argparse exit 2 |
-| 2h | timeout with a CLI that spawns a child and hangs | exit 124 in about timeout+30 s, child killed, cli.log exists |
+| 2h | timeout with a CLI that spawns a child and hangs | exit 124 after the deadline and cleanup, child killed, cli.log exists |
 | 2i | CLI fails with partial output | nothing on stdout, partial answer on stderr |
+| 2j | prompt-only Codex and Claude with a designated model and artifact directory | exact invocation arguments, terminal success evidence, original answer and hash, retained raw logs |
+| 2k | prompt-only mismatched or blank response, wrong model, or tool use | failed outcome, no successful answer file |
+| 2l | cancellation across two simultaneous invocations | selected invocation and descendants stop, unrelated invocation stays alive, final status and logs remain |
+| 2m | stop file exists before launch or attempt directory already exists | no provider launch, prior artifacts remain |
+| 2n | POSIX group probe or signal reports a permission error | keep cleanup unverified until the group is proved gone |
+| 2o | POSIX CLI exits while a child is still running | ordinary mode succeeds and leaves the background child running; prompt-only mode waits briefly, then stops a residual child and reports failure |
 
 ## 3. Real calls (N, `real_calls.sh`)
 

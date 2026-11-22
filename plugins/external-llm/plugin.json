@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "external-llm",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ask other AI models (Codex, Antigravity/Gemini, Claude) through their CLIs, by tier or model name. The model may read, search the web, run shell commands and edit files in the project.",
   "author": { "name": "chlee4831" },
   "extensions": {

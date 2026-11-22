@@ -5,9 +5,11 @@ description: Ask another AI model (OpenAI Codex, Google Antigravity/Gemini, or C
 
 # External model call
 
-Runs one prompt on another model's CLI in the current project and returns its final answer unchanged. That model follows the project's `AGENTS.md`. It may read, search the web, run shell commands and edit files, but cannot start subagents.
+Runs a prompt through another model's CLI and returns its answer verbatim. Review the project's instructions and confirm the permitted material, tools and receiver before starting the external call.
 
-If an `external-llm` subagent is available, hand it the task and stop.
+From Claude Code, assign the task to the plugin's `external-llm` Agent. From Codex, assign it to a native subagent. Give the child the exact task, approved arguments and paths, and the conditions for using them. Only the child runs `xllm.py`. The parent keeps the host handle for status, the final result, a follow-up, or a stop request.
+
+The child can run directly after receiving its assignment. A follow-up uses the same host child with the permitted context from the prior result and a new artifact directory. It starts a new external invocation. If the host cannot run a subagent, report the limitation to the parent.
 
 ## 1. Options
 
@@ -16,7 +18,11 @@ If an `external-llm` subagent is available, hand it the task and stop.
 | `--provider` | `codex` (OpenAI), `agy` (Google Antigravity), `claude` (Anthropic) |
 | `--model` | tier `lightest`, `light`, `standard`, `strongest`; family `luna`, `terra`, `sol`, `astra`, `flash`, `hydrogen`, `argon`, `carbon`, `haiku`, `sonnet`, `opus`, `fable`; or a full id |
 | `--effort` | `low`, `medium`, `high`, `xhigh`, `max` |
-| `--read-only` | no file edits; use it when the user says not to change files |
+| `--read-only` | no file edits; reading remains enabled |
+| `--prompt-only` | Claude or Codex, with an empty `--cwd`; disable project loading, shell, web, MCP and hooks using the provider controls |
+| `--exact-model` | pass the explicit `--model` and `--effort` unchanged |
+| `--artifact-dir <dir>` | preserve response, stdout, stderr and status in a new absolute directory |
+| `--cancel-file <file>` | stop the call when the absolute path is created |
 | `--cwd <dir>` | project to work in (default: current directory) |
 | `--timeout <sec>` | default 900 |
 | `--max-chars <n>` | default 20000; a longer answer is cut and ends with the path of the full text |
@@ -27,20 +33,20 @@ If an `external-llm` subagent is available, hand it the task and stop.
 
 ## 2. Run
 
-The script is `scripts/xllm.py` in this skill's directory; use its absolute path, and `python3` if `python` is missing. It needs network access and the user's CLI logins, so run it outside any sandbox; on a sandboxed host (e.g. Codex), ask for escalation, and rerun with escalation if a command is "not found".
+Use the absolute path of `scripts/xllm.py` with `python` or `python3`. The runner uses the installed, signed-in provider CLI. Follow the host's approvals for executing the command and contacting the provider.
 
 Write the prompt to a temporary UTF-8 file with your file tool, then run once:
 
 ```
-python <skill-dir>/scripts/xllm.py --provider <p> [--model <m>] [--effort <e>] --prompt-file <file>
+python <skill-dir>/scripts/xllm.py --provider <p> --prompt-file <file> --artifact-dir <new-dir> --cancel-file <cancel-path>
 ```
 
 In a POSIX shell, a heredoc works instead of the file (`<<'XLLM_EOF'` … `XLLM_EOF`).
 
-The prompt carries everything the other model needs: question, file paths, constraints. Never your own answer.
+For prompt-only calls, include the permitted source material in the prompt. Keep the artifact directory outside the empty working directory.
 
 ## 3. Report
 
-Print the script's stdout unchanged; its first line, `[model: provider/model/effort]`, names the model. Add nothing, and write nothing before the script finishes.
+Report the status and original answer path to the parent once. `xllm-result.json` records execution status and the CLI exit code. After success, the parent returns the requested answer verbatim from `xllm-output.txt`. Keep both raw logs for verification. While the command is running, use observed execution status to answer the parent's requests.
 
-On a non-zero exit, report its stderr and stop. Do not retry.
+On a stop request, create the assigned cancellation file while the runner is alive and confirm that it reports cancellation and process cleanup. If the host forcibly stops the child, check the cleanup separately. On failure, report the cause and artifact path to the parent.
